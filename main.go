@@ -14,6 +14,12 @@ func main() {
 	router := gin.Default()
 	database.ConnectDB()
 
+	router.Use(middleware.CustomRecovery())
+
+	router.GET("/", func(c *gin.Context) {
+		panic("意図的なパニック発生！")
+	})
+
 	// Cookieストアを作成。秘密鍵は任意の文字列に変更すること。
 	store := cookie.NewStore([]byte("secret"))
 	router.Use(sessions.Session("mysession", store))
@@ -23,10 +29,9 @@ func main() {
 	router.POST("/login", controllers.LoginHandler)
 
 	// 認証が必要なグループ
-	auth := router.Group("/")
+	auth := router.Group("/auth")
 	auth.Use(middleware.AuthRequired())
 	{
-		auth.GET("/profile", controllers.ProfileHandler)
 		auth.POST("/posts", controllers.CreatePostHandler)
 		// 他の保護されたルートもここに追加
 	}

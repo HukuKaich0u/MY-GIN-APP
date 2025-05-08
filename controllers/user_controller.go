@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -64,6 +65,15 @@ func LoginHandler(c *gin.Context) {
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(json.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "パスワードが間違っています"})
+	}
+
+	// セッションとCookieの設定
+	// パスワード認証成功後、セッションにユーザーIDを保存する
+	session := sessions.Default(c)
+	session.Set("user_id", user.ID)
+	if err := session.Save(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "セッションの保存に失敗しました"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "ログインに成功！"})
